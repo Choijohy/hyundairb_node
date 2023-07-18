@@ -1,10 +1,8 @@
 // (1) import modules and packages
 const express = require('express');
-const multer = require('multer')
-const path = require('path');
-const fs = require('fs')
-const nunjucks =  require('nunjucks');
-const { error } = require('console');
+const multer = require('multer') // 이미지 업로드
+const path = require('path'); // 경로 설정
+const fs = require('fs') // 파일 시스템 접근
 
 // (2) setting app : port
 const app = express();
@@ -16,7 +14,7 @@ app.engine('html', require('ejs').renderFile);
 
 // (3) middlewares
 
-// json parser
+// json data
 app.use(express.json({limit: '100mb'}));
 
 // 이미지 업로드용 디렉토리 생성
@@ -27,6 +25,7 @@ try{
   fs.mkdirSync('uploads')
 }
 
+// 이미지 업로드 multer 객체 생성 : upload
 const upload =  multer({
   storage: multer.diskStorage({
     //업로드 경로
@@ -35,22 +34,26 @@ const upload =  multer({
     },
     // 파일이름 설정 (확장자 추출)
     filename(req,file,done){
+      // 원본 파일명에서 확장자 추출
       const ext = path.extname(file.originalname);
+      // 새로운 파일명 : 원본 파일명(확장자 없이)+ 현재 시간 + 확장자
       done(null, path.basename(file.originalname, ext) + "_"+ Date.now() + ext);
     }
   }),
+  // 파일 사이즈 제한
   limits:{fileSize: 5 * 1024 * 1024}
 });
 
 // (4) routing
 
-// 이미지 업로드
+// 기본 페이지
 app.get('',function(req,res){
   res.render('image.html')
 });
 
 
-// input name 속성, field값 image로 설정
+// 이미지 업로드 : input name 속성, field값 image로 설정
+// 라우터에 upload 객체 장착
 app.post('/image', upload.single('image'),function(req,res,next){
   try {
     //업로드된 파일 정보
